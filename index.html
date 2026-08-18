@@ -5,11 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lot Listings — Clothing Auction</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+  import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBRZnvzFJAmBxp0JCza1pQ9k7J6y1itWW8",
+    authDomain: "yapingdirb.firebaseapp.com",
+    databaseURL: "https://yapingdirb-default-rtdb.firebaseio.com",
+    projectId: "yapingdirb",
+    storageBucket: "yapingdirb.firebasestorage.app",
+    messagingSenderId: "52612750725",
+    appId: "1:52612750725:web:ac2c2b355b150ce37a78ec"
+  };
+
+  const fbApp = initializeApp(firebaseConfig);
+  const db = getDatabase(fbApp);
+  window.__fb = { ref, set, onValue, db };
+</script>
 <style>
   :root{
-    --ink:#17181a;
-    --ink-2:#1f2023;
+    --bg:#1c7a41;
+    --ink:#0d2b18;
+    --ink-2:#22603a;
     --paper:#efe9dc;
     --paper-2:#e4ddcc;
     --brass:#c08a28;
@@ -21,7 +40,7 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
-    background:var(--ink);
+    background:var(--bg);
     color:var(--paper);
     font-family:'IBM Plex Sans', sans-serif;
     -webkit-font-smoothing:antialiased;
@@ -278,7 +297,7 @@
     font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.06em;
     padding:0 14px; border-radius:3px; cursor:pointer; text-transform:uppercase;
   }
-  .bid-form button:hover{ background:#000; }
+  .bid-form button:hover{ background:#061a0e; }
   .bid-form button:disabled{ opacity:.35; cursor:not-allowed; }
 
   .bid-error{ font-size:11.5px; color:var(--rust); font-family:'IBM Plex Mono', monospace; min-height:14px; }
@@ -314,6 +333,97 @@
   .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
   .loading{ text-align:center; padding:60px; color:var(--paper-2); font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.1em; }
+
+  /* ---------- PIXEL TYPE OVERRIDE ---------- */
+  /* VT323 is the readable pixel face for body copy; Press Start 2P is the
+     chunky arcade face reserved for headings and buttons, since at body size
+     it becomes very hard to read. */
+  body, input, textarea, select, button,
+  .field-label, .bid-count, .lot-meta, .bid-row, .bid-error,
+  .lot-desc, .subtitle, .eyebrow, .stat-row, .loading, .toast{
+    font-family:'VT323', monospace !important;
+    letter-spacing:0.02em;
+  }
+  body{ font-size:19px; }
+  input, textarea, select{ font-size:19px !important; }
+  .field-label{ font-size:15px !important; letter-spacing:.08em; }
+  .bid-count, .lot-meta, .bid-error, .loading{ font-size:16px !important; }
+  .subtitle{ font-size:19px !important; }
+
+  h1, h2, h3, .title, .lot-title, .btn, button, .lot-no{
+    font-family:'Press Start 2P', monospace !important;
+    letter-spacing:0 !important;
+  }
+  .title{ font-size:30px !important; line-height:1.5 !important; }
+  .lot-title{ font-size:13px !important; line-height:1.7 !important; }
+  .btn, button{ font-size:11px !important; line-height:1.6 !important; }
+  .lot-no{ font-size:11px !important; }
+  .eyebrow, .stat-row{ font-size:16px !important; }
+
+  /* Keep pixel art crisp rather than smoothed when scaled up */
+  img{ image-rendering: pixelated; }
+  .lot-gallery .main-photo, .preview-strip img{ image-rendering:auto; }
+
+  /* ---------- RUNNING PIXEL HORSE ---------- */
+  .horse-track{
+    position:fixed; left:0; right:0; bottom:0; height:72px;
+    pointer-events:none; z-index:50; overflow:hidden;
+    background:linear-gradient(to top, rgba(28,122,65,.94), rgba(28,122,65,0));
+  }
+  .horse-ground{
+    position:absolute; bottom:14px; left:0; right:0; height:2px;
+    background:repeating-linear-gradient(to right,
+      var(--brass) 0 8px, transparent 8px 16px);
+    opacity:.45;
+  }
+  /* The whole chase travels across the screen as one group, so the two
+     never drift out of sync. Inside the group, the runner closes the gap. */
+  .parade{
+    position:absolute; bottom:0; left:-160px;
+    width:1px; height:100%;
+    animation: horse-gallop 9s linear infinite;
+  }
+  .horse{
+    position:absolute; bottom:16px; left:96px;
+    width:64px; height:48px;
+  }
+  .horse canvas{ width:64px; height:48px; image-rendering:pixelated; display:block; }
+  .runner{
+    position:absolute; bottom:16px; left:0;
+    width:48px; height:48px;
+    animation: runner-close 9s ease-in infinite;
+  }
+  .runner canvas{ width:48px; height:48px; image-rendering:pixelated; display:block; }
+  @keyframes runner-close{
+    from{ transform:translateX(0); }
+    to{ transform:translateX(58px); }   /* gains on the horse, never quite reaches */
+  }
+  @keyframes horse-gallop{
+    from{ transform:translateX(0); }
+    to{ transform:translateX(calc(100vw + 340px)); }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .parade{ animation:none; left:20px; }
+    .runner{ animation:none; }
+  }
+
+  /* Stop the horse strip from covering the last lot card */
+  .wrap{ padding-bottom:90px; }
+
+  /* ---------- VIDEO ---------- */
+  .lot-gallery .main-video{
+    width:100%; display:block; background:#000;
+    border:1px solid var(--line);
+  }
+  .video-tag{
+    display:inline-block; margin-top:6px;
+    font-family:'Press Start 2P', monospace; font-size:9px;
+    color:var(--brass); letter-spacing:0;
+  }
+  .video-pending{
+    margin-top:8px; font-family:'VT323', monospace; font-size:16px;
+    color:var(--brass-bright);
+  }
 </style>
 </head>
 <body>
@@ -362,6 +472,11 @@
         <input type="file" id="f-photos" accept="image/*" multiple>
         <div class="preview-strip" id="previewStrip"></div>
       </div>
+      <div class="full">
+        <label class="field-label">Video <span style="opacity:.6;">(max 10 sec)</span></label>
+        <input type="file" id="f-video" accept="video/*">
+        <div class="video-pending" id="videoPending"></div>
+      </div>
     </div>
     <div class="intake-actions">
       <button class="btn solid" id="btnAddLot">Post lot</button>
@@ -372,6 +487,14 @@
 
   <div class="seller-access">
     <button id="sellerAccessBtn" type="button">Seller sign-in</button>
+  </div>
+</div>
+
+<div class="horse-track" aria-hidden="true">
+  <div class="horse-ground"></div>
+  <div class="parade">
+    <div class="runner"><canvas id="manCanvas" width="48" height="48"></canvas></div>
+    <div class="horse"><canvas id="horseCanvas" width="64" height="48"></canvas></div>
   </div>
 </div>
 
@@ -489,40 +612,96 @@ document.getElementById('f-photos').addEventListener('change', async (e) => {
   e.target.value = '';
 });
 
-let lastLotsSnapshot = '';
+/* ---------- VIDEO UPLOAD ---------- */
+let pendingVideo = null;
 
-async function loadLots(){
-  try{
-    const res = await window.storage.get('lots', true);
-    lots = res && res.value ? JSON.parse(res.value) : [];
-  }catch(e){
-    lots = [];
-  }
-  lastLotsSnapshot = JSON.stringify(lots);
-  render();
+// Realtime Database stores everything as text, so the video has to be
+// base64-encoded. That inflates it by about a third, and RTDB rejects
+// very large single values — so we cap the file size as well as duration.
+const MAX_VIDEO_BYTES = 3 * 1024 * 1024; // 3 MB before encoding
+const MAX_VIDEO_SECONDS = 10;
+
+function readVideoDuration(file){
+  return new Promise((resolve, reject) => {
+    const v = document.createElement('video');
+    v.preload = 'metadata';
+    v.onloadedmetadata = () => {
+      URL.revokeObjectURL(v.src);
+      resolve(v.duration);
+    };
+    v.onerror = () => reject(new Error('unreadable video'));
+    v.src = URL.createObjectURL(file);
+  });
 }
 
-// Silently re-check storage every few seconds so other open tabs/devices
-// pick up new lots and bids without needing a manual refresh.
-async function pollLots(){
+function fileToDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result);
+    r.onerror = () => reject(new Error('read failed'));
+    r.readAsDataURL(file);
+  });
+}
+
+document.getElementById('f-video').addEventListener('change', async (e) => {
+  const file = (e.target.files || [])[0];
+  const pendingEl = document.getElementById('videoPending');
+  if(!file){ pendingVideo = null; pendingEl.textContent = ''; return; }
+
+  pendingEl.textContent = 'Checking video…';
   try{
-    const res = await window.storage.get('lots', true);
-    const fresh = res && res.value ? res.value : '[]';
-    if(fresh !== lastLotsSnapshot){
-      lastLotsSnapshot = fresh;
-      lots = JSON.parse(fresh);
-      render();
+    const duration = await readVideoDuration(file);
+    if(duration > MAX_VIDEO_SECONDS + 0.5){
+      pendingVideo = null;
+      pendingEl.textContent = '';
+      e.target.value = '';
+      showToast(`Video is ${duration.toFixed(1)}s — trim it to ${MAX_VIDEO_SECONDS}s or under`);
+      return;
     }
-  }catch(e){
-    // ignore transient errors, try again next interval
+    if(file.size > MAX_VIDEO_BYTES){
+      pendingVideo = null;
+      pendingEl.textContent = '';
+      e.target.value = '';
+      showToast(`Video is ${(file.size/1048576).toFixed(1)}MB — keep it under 3MB`);
+      return;
+    }
+    pendingVideo = await fileToDataUrl(file);
+    pendingEl.textContent = `Video ready · ${duration.toFixed(1)}s · ${(file.size/1048576).toFixed(1)}MB`;
+  }catch(err){
+    pendingVideo = null;
+    pendingEl.textContent = '';
+    e.target.value = '';
+    showToast('Could not read that video file');
   }
+});
+
+let lastLotsSnapshot = '';
+let suppressNextRender = false;
+
+function loadLots(){
+  // Firebase's onValue fires immediately with current data, then again
+  // every time the data changes anywhere — this replaces both the old
+  // one-time load AND the polling loop with instant, real-time updates.
+  const { ref, onValue, db } = window.__fb;
+  onValue(ref(db, 'lots'), (snapshot) => {
+    const val = snapshot.val();
+    lots = val ? Object.values(val) : [];
+    const fresh = JSON.stringify(lots);
+    if(fresh === lastLotsSnapshot && suppressNextRender){
+      suppressNextRender = false;
+      return;
+    }
+    lastLotsSnapshot = fresh;
+    render();
+  });
 }
-setInterval(pollLots, 4000);
 
 async function saveLots(){
   try{
     lastLotsSnapshot = JSON.stringify(lots);
-    await window.storage.set('lots', lastLotsSnapshot, true);
+    suppressNextRender = true;
+    const { ref, set, db } = window.__fb;
+    await set(ref(db, 'lots'), lots);
   }catch(e){
     showToast('Could not save — try again');
   }
@@ -545,6 +724,7 @@ async function addLot(){
     title, size, condition, desc,
     start,
     images: pendingImages.slice(),
+    video: pendingVideo || null,
     glyph: GLYPHS[Math.floor(Math.random()*GLYPHS.length)],
     bids: [],
     createdAt: Date.now()
@@ -556,6 +736,9 @@ async function addLot(){
   document.getElementById('f-desc').value='';
   document.getElementById('f-start').value='';
   pendingImages = [];
+  pendingVideo = null;
+  document.getElementById('f-video').value = '';
+  document.getElementById('videoPending').textContent = '';
   renderPreviews();
   document.getElementById('intake').removeAttribute('open');
   showToast('Lot ' + lot.lotNo + ' posted');
@@ -606,6 +789,13 @@ function lotCard(lot){
   ).join('');
 
   const hasPhotos = lot.images && lot.images.length > 0;
+  const videoHtml = lot.video ? `
+    <div class="lot-gallery">
+      <video class="main-video" src="${lot.video}" controls playsinline preload="metadata"></video>
+      <span class="video-tag">▶ VIDEO</span>
+    </div>
+  ` : '';
+
   const galleryHtml = hasPhotos ? `
     <div class="lot-gallery">
       <img class="main-photo" id="main-img-${lot.id}" src="${lot.images[0]}">
@@ -615,17 +805,18 @@ function lotCard(lot){
         ${lot.images.map((src, i) => `<img src="${src}" class="${i===0?'active':''}" onclick="setActiveImage('${lot.id}', ${i}, this)">`).join('')}
       </div>` : ''}
     </div>
-  ` : `
+  ` : (lot.video ? '' : `
     <div class="lot-swatch">
       <div class="stitch"></div>
       <div class="glyph">${lot.glyph}</div>
     </div>
-  `;
+  `);
 
   return `
   <div class="lot">
     <div class="lot-badge">LOT ${lot.lotNo}</div>
     ${galleryHtml}
+    ${videoHtml}
     <div class="lot-body">
       <div class="lot-title">${esc(lot.title)}</div>
       <div class="lot-meta">
@@ -671,7 +862,121 @@ function render(){
 }
 
 document.getElementById('btnAddLot').addEventListener('click', addLot);
-loadLots();
+
+/* ---------- PIXEL HORSE ----------
+   Drawn as a 4-frame gallop cycle on a 16x12 pixel grid, scaled up 4x.
+   Each frame is a list of [x, y, w, h] blocks in grid units. */
+(function(){
+  const cv = document.getElementById('horseCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const PX = 4; // one grid unit = 4 real pixels
+
+  const BODY = '#c08a28';   // brass
+  const DARK = '#7d5716';   // shading / legs
+  const MANE = '#efe9dc';   // paper — reads against the green backdrop
+
+  // Shared body shape across all frames — only the legs change.
+  const bodyParts = [
+    // [x, y, w, h, color]
+    [3, 4, 8, 4, BODY],    // torso
+    [10, 2, 3, 3, BODY],   // neck
+    [12, 1, 3, 2, BODY],   // head
+    [14, 2, 1, 1, DARK],   // muzzle
+    [11, 1, 2, 1, MANE],   // mane
+    [10, 3, 1, 1, MANE],   // mane trail
+    [2, 3, 1, 3, MANE],    // tail
+    [1, 4, 1, 3, MANE],    // tail tip
+    [3, 7, 8, 1, DARK],    // belly shading
+  ];
+
+  // Four gallop poses: front-leg pair and back-leg pair positions.
+  const legFrames = [
+    [[4,8,1,3],[6,8,1,3],[9,8,1,3],[10,8,1,2]],
+    [[3,8,1,2],[5,8,1,3],[9,8,1,3],[11,8,1,3]],
+    [[4,8,1,3],[7,8,1,2],[8,8,1,3],[10,8,1,3]],
+    [[5,8,1,3],[6,8,1,2],[9,8,1,2],[11,8,1,3]],
+  ];
+
+  let frame = 0;
+
+  function draw(){
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    for(const [x, y, w, h, color] of bodyParts){
+      ctx.fillStyle = color;
+      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+    }
+    ctx.fillStyle = DARK;
+    for(const [x, y, w, h] of legFrames[frame]){
+      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+    }
+    frame = (frame + 1) % legFrames.length;
+  }
+
+  draw();
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setInterval(draw, 110);
+  }
+})();
+
+/* ---------- PIXEL STICKMAN (chasing the horse) ----------
+   12x12 grid scaled 4x. Head and torso hold still; arms and legs
+   swing through a 4-frame run cycle. */
+(function(){
+  const cv = document.getElementById('manCanvas');
+  if(!cv) return;
+  const ctx = cv.getContext('2d');
+  const PX = 4;
+  const LINE = '#efe9dc';
+
+  // Static core: head, neck, torso.
+  const core = [
+    [5, 1, 3, 1], [4, 2, 1, 2], [8, 2, 1, 2], [5, 4, 3, 1], // head outline
+    [6, 5, 1, 1],                                            // neck
+    [6, 6, 1, 4],                                            // torso
+  ];
+
+  // Per-frame limbs: arms reaching forward, legs mid-stride.
+  const limbFrames = [
+    { arms: [[7,6,2,1],[9,5,1,1],[4,7,2,1],[3,8,1,1]],
+      legs: [[7,10,2,1],[9,11,1,1],[4,10,2,1],[3,11,1,1]] },
+    { arms: [[7,6,1,1],[8,7,1,1],[5,7,1,1],[4,8,1,1]],
+      legs: [[6,10,1,2],[7,11,2,1],[5,10,1,2],[4,11,1,1]] },
+    { arms: [[4,6,2,1],[3,5,1,1],[7,7,2,1],[9,8,1,1]],
+      legs: [[4,10,2,1],[3,11,1,1],[7,10,2,1],[9,11,1,1]] },
+    { arms: [[5,6,1,1],[4,7,1,1],[7,7,1,1],[8,8,1,1]],
+      legs: [[5,10,1,2],[4,11,1,1],[6,10,1,2],[7,11,2,1]] },
+  ];
+
+  let frame = 0;
+
+  function draw(){
+    ctx.clearRect(0, 0, cv.width, cv.height);
+    ctx.fillStyle = LINE;
+    for(const [x, y, w, h] of core){
+      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+    }
+    const f = limbFrames[frame];
+    for(const [x, y, w, h] of f.arms.concat(f.legs)){
+      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+    }
+    frame = (frame + 1) % limbFrames.length;
+  }
+
+  draw();
+  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+    setInterval(draw, 100); // slightly faster stride than the horse
+  }
+})();
+
+function startWhenFirebaseReady(){
+  if(window.__fb){
+    loadLots();
+  }else{
+    setTimeout(startWhenFirebaseReady, 50);
+  }
+}
+startWhenFirebaseReady();
 </script>
 </body>
 </html>
