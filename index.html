@@ -234,6 +234,55 @@
     opacity:1; background:#7a1f1f; border-color:#c0392b; color:#fff;
   }
 
+  /* Edit sits beside delete, brass on hover rather than red, so the two are
+     never mistaken for each other in a hurry. */
+  .lot-edit{
+    position:absolute; top:12px; right:44px; z-index:3;
+    width:26px; height:26px; padding:0; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-size:13px;
+    color:var(--paper); background:var(--ink);
+    border:1px solid var(--line); border-radius:2px;
+    cursor:pointer; opacity:.55;
+    transition:opacity .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .lot-edit:hover{
+    opacity:1; background:var(--brass); border-color:var(--brass-bright); color:var(--ink);
+  }
+
+  .edit-form{ display:flex; flex-direction:column; gap:9px; }
+  .edit-form .edit-label{
+    font-family:'IBM Plex Mono', monospace; font-size:9.5px;
+    letter-spacing:.08em; text-transform:uppercase;
+    color:rgba(23,24,26,.55); margin-bottom:3px; display:block;
+  }
+  .edit-form input, .edit-form select, .edit-form textarea{
+    width:100%; padding:8px; box-sizing:border-box;
+    font-family:'VT323', monospace; font-size:17px;
+    border:1px solid var(--line); border-radius:2px;
+    background:var(--paper); color:var(--ink);
+  }
+  .edit-form textarea{ min-height:58px; resize:vertical; }
+  .edit-pair{ display:flex; gap:8px; }
+  .edit-pair > div{ flex:1; }
+  .edit-actions{ display:flex; gap:8px; margin-top:2px; }
+  .edit-actions button{ flex:1; }
+  .edit-danger{
+    background:#7a1f1f; border-color:#c0392b; color:#fff;
+    width:100%; margin-top:4px;
+  }
+
+  /* Seller only, on each line of the history. */
+  .row-right{ display:flex; align-items:center; gap:6px; }
+  .bid-x{
+    padding:0 5px; line-height:1.4;
+    font-family:'IBM Plex Mono', monospace; font-size:12px;
+    background:transparent; color:rgba(23,24,26,.45);
+    border:1px solid rgba(23,24,26,.25); border-radius:2px;
+    cursor:pointer;
+  }
+  .bid-x:hover{ background:#7a1f1f; border-color:#c0392b; color:#fff; }
+
   .lot-badge{
     position:absolute; top:12px; left:12px;
     background:var(--ink);
@@ -742,6 +791,11 @@ function esc(s){
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+/* esc() leaves double quotes alone, which is fine inside a text node but
+   would break out of value="…". Anything landing in an attribute uses this. */
+function escAttr(s){
+  return esc(s).replace(/"/g, '&quot;');
 }
 function fmtMoney(n){
   return Number(n).toLocaleString('en-US', {minimumFractionDigits:0, maximumFractionDigits:2});
@@ -1291,6 +1345,124 @@ async function deleteLot(lotId){
   }
 }
 
+/* ---------- SELLER EDITING ----------
+   Only one lot is editable at a time. The open card is tracked by id and the
+   form is rebuilt by render(), so a database update mid-edit repaints the
+   form rather than leaving a stale one on screen. */
+
+let editingLotId = null;
+
+function beginEdit(lotId){
+  if(!isSeller){ showToast('Only the seller can edit lots'); return; }
+  editingLotId = lotId;
+  render();
+}
+
+function cancelEdit(){
+  editingLotId = null;
+  render();
+}
+
+async function saveEdit(lotId){
+  if(!isSeller){ showToast('Only the seller can edit lots'); return; }
+  const lot = lots.find(l => l.id === lotId);
+  if(!lot) return;
+
+  const val = k => {
+    const el = document.getElementById('e-' + k + '-' + lotId);
+    return el ? el.value : '';
+  };
+
+  const title = val('title').trim();
+  const lotNo = val('no').trim();
+  const size  = val('size').trim();
+  const cond  = val('cond');
+  const desc  = val('desc').trim();
+  const start = parseFloat(val('start'));
+
+  if(!title){ showToast('Give the piece a title'); return; }
+  if(!start || start <= 0){ showToast('Set a starting bid above $0'); return; }
+
+  // A starting price above the leading bid would leave the card contradicting
+  // itself, so it is refused rather than quietly written.
+  const high = lot.bids.length ? lot.bids[lot.bids.length-1].amount : null;
+  if(high !== null && start > high){
+    showToast('Starting bid cannot exceed the leading bid of $' + fmtMoney(high));
+    return;
+  }
+
+  const before = { title: lot.title, lotNo: lot.lotNo, size: lot.size,
+                   condition: lot.condition, desc: lot.desc, start: lot.start };
+
+  lot.title = title;
+  lot.lotNo = lotNo || lot.lotNo;
+  lot.size = size;
+  lot.condition = cond;
+  lot.desc = desc;
+  lot.start = start;
+
+  editingLotId = null;
+  render();
+
+  const ok = await saveLots();
+  if(ok){
+    showToast('Lot ' + lot.lotNo + ' updated');
+  }else{
+    Object.assign(lot, before);   // roll back if the write did not land
+    render();
+  }
+}
+
+async function deleteBid(lotId, idx){
+  if(!isSeller){ showToast('Only the seller can remove bids'); return; }
+  const lot = lots.find(l => l.id === lotId);
+  if(!lot || !lot.bids[idx]) return;
+
+  const b = lot.bids[idx];
+  const isTop = idx === lot.bids.length - 1;
+  const msg = 'Remove ' + b.name + "'s bid of $" + fmtMoney(b.amount) +
+    ' on Lot ' + lot.lotNo + '?' +
+    (isTop ? '\n\nThis is the leading bid, so the price will fall back to the one beneath it.' : '') +
+    '\n\nThis cannot be undone.';
+
+  if(!confirm(msg)) return;
+
+  const before = lot.bids.slice();
+  lot.bids.splice(idx, 1);
+  render();
+
+  const ok = await saveLots();
+  if(ok){
+    showToast('Bid removed from Lot ' + lot.lotNo);
+  }else{
+    lot.bids = before;
+    render();
+  }
+}
+
+async function clearBids(lotId){
+  if(!isSeller){ showToast('Only the seller can remove bids'); return; }
+  const lot = lots.find(l => l.id === lotId);
+  if(!lot || !lot.bids.length) return;
+
+  const n = lot.bids.length;
+  if(!confirm('Remove all ' + n + ' bid' + (n === 1 ? '' : 's') + ' on Lot ' + lot.lotNo +
+    '?\n\nThe lot itself stays. This cannot be undone.')) return;
+
+  const before = lot.bids.slice();
+  lot.bids = [];
+  editingLotId = null;
+  render();
+
+  const ok = await saveLots();
+  if(ok){
+    showToast('Bids cleared on Lot ' + lot.lotNo);
+  }else{
+    lot.bids = before;
+    render();
+  }
+}
+
 function setActiveImage(lotId, idx, thumbEl){
   const lot = lots.find(l => l.id === lotId);
   if(!lot) return;
@@ -1304,17 +1476,27 @@ function setActiveImage(lotId, idx, thumbEl){
 }
 
 function lotCard(lot){
+  const editing = isSeller && editingLotId === lot.id;
   const hasBids = lot.bids.length > 0;
   const current = hasBids ? lot.bids[lot.bids.length-1].amount : lot.start;
   const leader = hasBids ? lot.bids[lot.bids.length-1].name : null;
   // Bids from this browser are picked out in gold, with a marker so it is
   // obvious which line is yours even when names repeat.
-  const historyRows = lot.bids.slice().reverse().slice(0,8).map(b => {
-    const mine = b.by && b.by === BIDDER_ID;
-    return `<div class="history-row${mine ? ' mine' : ''}">` +
-      `<span>${esc(b.name)}${mine ? '<em class="you-tag">you</em>' : ''}</span>` +
-      `<b>$${fmtMoney(b.amount)}</b></div>`;
-  }).join('');
+  // The index is carried through the reverse so the seller's remove button
+  // points at the right entry in the underlying array, not the display order.
+  const historyRows = lot.bids
+    .map((b, i) => ({ b, i }))
+    .reverse()
+    .slice(0,8)
+    .map(({ b, i }) => {
+      const mine = b.by && b.by === BIDDER_ID;
+      return `<div class="history-row${mine ? ' mine' : ''}">` +
+        `<span>${esc(b.name)}${mine ? '<em class="you-tag">you</em>' : ''}</span>` +
+        `<span class="row-right"><b>$${fmtMoney(b.amount)}</b>` +
+        (isSeller ? `<button class="bid-x" title="Remove this bid"
+            onclick="deleteBid('${lot.id}', ${i})">&times;</button>` : '') +
+        `</span></div>`;
+    }).join('');
 
   const topBid   = hasBids ? lot.bids[lot.bids.length-1] : null;
   const leadMine = !!(topBid && topBid.by && topBid.by === BIDDER_ID);
@@ -1356,9 +1538,52 @@ function lotCard(lot){
     <div class="lot-badge">LOT ${lot.lotNo}</div>
     ${isSeller ? `<button class="lot-delete" title="Remove this lot"
       onclick="deleteLot('${lot.id}')">&times;</button>` : ''}
+    ${isSeller && !editing ? `<button class="lot-edit" title="Edit this lot"
+      onclick="beginEdit('${lot.id}')">✎</button>` : ''}
     ${galleryHtml}
     ${videoHtml}
     <div class="lot-body">
+      ${editing ? `
+      <div class="edit-form">
+        <div class="edit-pair">
+          <div>
+            <span class="edit-label">Lot no.</span>
+            <input type="text" id="e-no-${lot.id}" value="${escAttr(lot.lotNo)}" maxlength="4">
+          </div>
+          <div>
+            <span class="edit-label">Size</span>
+            <input type="text" id="e-size-${lot.id}" value="${escAttr(lot.size || '')}" maxlength="12">
+          </div>
+        </div>
+        <div>
+          <span class="edit-label">Title</span>
+          <input type="text" id="e-title-${lot.id}" value="${escAttr(lot.title)}" maxlength="60">
+        </div>
+        <div class="edit-pair">
+          <div>
+            <span class="edit-label">Condition</span>
+            <select id="e-cond-${lot.id}">
+              ${['New with tags','Excellent','Good','Worn'].map(c =>
+                `<option${c === lot.condition ? ' selected' : ''}>${c}</option>`).join('')}
+            </select>
+          </div>
+          <div>
+            <span class="edit-label">Starting bid ($)</span>
+            <input type="number" id="e-start-${lot.id}" value="${lot.start}" min="0" step="1">
+          </div>
+        </div>
+        <div>
+          <span class="edit-label">Description</span>
+          <textarea id="e-desc-${lot.id}" maxlength="240">${esc(lot.desc || '')}</textarea>
+        </div>
+        <div class="edit-actions">
+          <button onclick="saveEdit('${lot.id}')">Save</button>
+          <button onclick="cancelEdit()">Cancel</button>
+        </div>
+        ${hasBids ? `<button class="edit-danger" onclick="clearBids('${lot.id}')">
+          Clear all ${lot.bids.length} bid${lot.bids.length === 1 ? '' : 's'}</button>` : ''}
+      </div>
+      ` : `
       <div class="lot-title">${esc(lot.title)}</div>
       <div class="lot-meta">
         ${lot.size ? `<span>SIZE ${esc(lot.size)}</span>` : ''}
@@ -1385,6 +1610,7 @@ function lotCard(lot){
           <div class="history-list">${historyRows}</div>
         </details>` : ''}
       </div>
+      `}
     </div>
   </div>`;
 }
