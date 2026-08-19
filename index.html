@@ -1,9 +1,21 @@
 <!DOCTYPE html>
+<!--
+  Copyright (c) 2026 Omofiwahan Abayomi. All rights reserved.
+
+  This source code and its design are the property of the author. No part of
+  it may be copied, reproduced, modified, distributed, or used to create a
+  derivative work without prior written permission.
+
+  Being visible in the browser does not place this code in the public domain.
+  See the LICENSE file in the repository for full terms.
+-->
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lot Listings — Clothing Auction</title>
+<meta name="copyright" content="Copyright (c) 2026 Omofiwahan Abayomi. All rights reserved.">
+<meta name="author" content="Omofiwahan Abayomi">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
 <script type="module">
@@ -40,12 +52,13 @@
   *{box-sizing:border-box;}
   body{
     margin:0;
+    padding-top:30px;   /* clears the fixed disclaimer ticker */
     background:var(--bg);
     color:var(--paper);
     font-family:'IBM Plex Sans', sans-serif;
     -webkit-font-smoothing:antialiased;
   }
-  .wrap{ max-width:1080px; margin:0 auto; padding:0 20px 80px; }
+  .wrap{ max-width:1080px; margin:0 auto; padding:0 20px 80px; position:relative; z-index:1; }
 
   /* ---------- Masthead ---------- */
   header.masthead{
@@ -167,6 +180,60 @@
     display:flex; flex-direction:column;
     box-shadow:0 10px 26px rgba(0,0,0,.28);
   }
+  /* ---------- SCROLLING DISCLAIMER ----------
+     A yellow ticker pinned to the top of the window. Two identical copies of
+     the text run back to back and the strip is shifted by exactly half its
+     own width, which is what makes the loop seamless rather than snapping. */
+  .ticker{
+    position:fixed; top:0; left:0; right:0; z-index:210;
+    background:#e0a83e;
+    border-bottom:2px solid #8a5f14;
+    overflow:hidden;
+    height:30px; display:flex; align-items:center;
+    pointer-events:none;
+  }
+  .ticker-track{
+    display:flex; flex:none;
+    white-space:nowrap;
+    animation:ticker-run 26s linear infinite;
+  }
+  .ticker-track span{
+    font-family:'Press Start 2P', monospace;
+    font-size:10px; letter-spacing:1px;
+    color:#2a1c00;
+    padding:0 26px;
+  }
+  @keyframes ticker-run{
+    from{ transform:translateX(0); }
+    to{ transform:translateX(-50%); }
+  }
+  @media (max-width:640px){
+    .ticker{ height:26px; }
+    .ticker-track span{ font-size:8px; padding:0 18px; }
+    body{ padding-top:26px; }
+    .cloudbank{ top:26px; }
+    .gate{ inset:26px 0 0 0; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    .ticker-track{ animation:none; }
+  }
+
+  /* Seller only. Sits opposite the lot number, muted until hovered so it
+     never invites a stray click on an active lot. */
+  .lot-delete{
+    position:absolute; top:12px; right:12px; z-index:3;
+    width:26px; height:26px; padding:0; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'IBM Plex Mono', monospace; font-size:16px;
+    color:var(--paper); background:var(--ink);
+    border:1px solid var(--line); border-radius:2px;
+    cursor:pointer; opacity:.55;
+    transition:opacity .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .lot-delete:hover{
+    opacity:1; background:#7a1f1f; border-color:#c0392b; color:#fff;
+  }
+
   .lot-badge{
     position:absolute; top:12px; left:12px;
     background:var(--ink);
@@ -250,6 +317,15 @@
     padding:6px;
   }
   .seller-access button:hover{ color:rgba(239,233,220,.55); }
+  /* Reads as live and deliberate while the site is shut, so it is obvious
+     at a glance that visitors are currently being blocked. */
+  .seller-access button.is-locked{
+    color:var(--brass-bright);
+    border:1px solid var(--brass);
+    border-radius:2px;
+    padding:6px 10px;
+  }
+  .seller-access button.is-locked:hover{ color:var(--brass-bright); }
   .lot-body{ padding:16px 16px 14px; display:flex; flex-direction:column; gap:10px; flex:1; }
   .lot-title{
     font-family:'Fraunces', serif;
@@ -364,9 +440,39 @@
   img{ image-rendering: pixelated; }
   .lot-gallery .main-photo, .preview-strip img{ image-rendering:auto; }
 
-  /* ---------- RUNNING PIXEL HORSE ---------- */
+  /* ---------- AMBIENT PIXEL ART ---------- */
+  /* Birds drift across the middle of the page at random. Sits behind the
+     content so it never blocks a lot card, and ignores pointer events. */
+  .sky{
+    position:fixed; inset:0;
+    pointer-events:none; z-index:0; overflow:hidden;
+  }
+  .bird{
+    position:absolute;
+    will-change:transform;
+  }
+  .bird canvas{ display:block; image-rendering:pixelated; }
+  @media (prefers-reduced-motion: reduce){
+    .sky{ display:none; }
+  }
+
+  /* A band of cloud across the very top of the page, full viewport width so
+     they drift right past the edges rather than stopping at the text column.
+     Fixed, so they stay in the sky as the page scrolls. */
+  .masthead{ position:relative; }
+  .masthead > *{ position:relative; z-index:1; }
+  .cloudbank{
+    position:fixed; top:30px; left:0; right:0; height:190px;
+    pointer-events:none; z-index:0; overflow:hidden;
+  }
+  .cloud{ position:absolute; will-change:transform; opacity:.30; }
+  .cloud canvas{ display:block; image-rendering:pixelated; }
+  @media (prefers-reduced-motion: reduce){
+    .cloudbank{ display:none; }
+  }
+
   .horse-track{
-    position:fixed; left:0; right:0; bottom:0; height:72px;
+    position:fixed; left:0; right:0; bottom:0; height:130px;
     pointer-events:none; z-index:50; overflow:hidden;
     background:linear-gradient(to top, rgba(28,122,65,.94), rgba(28,122,65,0));
   }
@@ -376,39 +482,134 @@
       var(--brass) 0 8px, transparent 8px 16px);
     opacity:.45;
   }
-  /* The whole chase travels across the screen as one group, so the two
-     never drift out of sync. Inside the group, the runner closes the gap. */
-  .parade{
-    position:absolute; bottom:0; left:-160px;
-    width:1px; height:100%;
-    animation: horse-gallop 9s linear infinite;
-  }
-  .horse{
-    position:absolute; bottom:16px; left:96px;
-    width:64px; height:48px;
-  }
-  .horse canvas{ width:64px; height:48px; image-rendering:pixelated; display:block; }
-  .runner{
+  /* ---------- THE SCENE ----------
+     A scripted story runs along the bottom strip: the hunter shoots a bird,
+     it falls, and a wolf steals it before he can collect. All positioning is
+     driven from JavaScript, since the beats need a timeline rather than
+     independent CSS loops. */
+  .actor{
     position:absolute; bottom:16px; left:0;
-    width:48px; height:48px;
-    animation: runner-close 9s ease-in infinite;
+    pointer-events:none;
   }
-  .runner canvas{ width:48px; height:48px; image-rendering:pixelated; display:block; }
-  @keyframes runner-close{
-    from{ transform:translateX(0); }
-    to{ transform:translateX(58px); }   /* gains on the horse, never quite reaches */
+  .actor canvas{ display:block; image-rendering:pixelated; }
+  #sceneBird{ position:absolute; left:0; bottom:16px; pointer-events:none; }
+  #sceneBird canvas{ display:block; image-rendering:pixelated; }
+  .muzzle{
+    position:absolute; left:0; bottom:16px; pointer-events:none;
+    opacity:0;
   }
-  @keyframes horse-gallop{
-    from{ transform:translateX(0); }
-    to{ transform:translateX(calc(100vw + 340px)); }
-  }
+  .muzzle canvas{ display:block; image-rendering:pixelated; }
   @media (prefers-reduced-motion: reduce){
-    .parade{ animation:none; left:20px; }
-    .runner{ animation:none; }
+    .actor, #sceneBird, .muzzle{ display:none; }
   }
 
   /* Stop the horse strip from covering the last lot card */
-  .wrap{ padding-bottom:90px; }
+  .wrap{ padding-bottom:150px; }
+
+  /* Sound is off until asked for, so the toggle has to stay reachable at all
+     times, including while the doors are closed. */
+  .sound-toggle{
+    position:fixed; right:14px; bottom:14px; z-index:220;
+    font-family:'Press Start 2P', monospace; font-size:8px;
+    color:var(--brass); background:rgba(13,43,24,.85);
+    border:1px solid var(--brass); border-radius:2px;
+    padding:8px 10px; cursor:pointer; opacity:.65;
+    transition:opacity .15s ease, color .15s ease, border-color .15s ease;
+  }
+  .sound-toggle:hover{ opacity:1; }
+  .sound-toggle.on{
+    color:var(--brass-bright); border-color:var(--brass-bright); opacity:1;
+  }
+  @media (max-width:640px){
+    .sound-toggle{ right:10px; bottom:10px; font-size:7px; padding:7px 8px; }
+  }
+
+  /* ---------- DOORS CLOSED ----------
+     Holds visitors out until the opening time passes. The panel itself is
+     transparent so the clouds, birds and the scene along the bottom all keep
+     running behind it; only the lots themselves are hidden. */
+  .gate{
+    position:fixed; inset:30px 0 0 0; z-index:200;
+    display:none; align-items:center; justify-content:center;
+    background:transparent;
+    text-align:center; padding:24px;
+    pointer-events:none;          /* the animations stay visible, not clickable */
+  }
+  .gate.showing{ display:flex; }
+  /* Hide the catalog rather than covering it, so nothing shows through. */
+  body.gated .wrap{ visibility:hidden; }
+  .gate-inner{
+    max-width:520px; position:relative; z-index:1;
+    pointer-events:auto;          /* but the sign-in button still works */
+    padding:30px 28px;
+    background:rgba(13,43,24,.86);
+    border:1px solid var(--brass);
+    border-radius:3px;
+    box-shadow:0 14px 40px rgba(0,0,0,.35);
+  }
+  .gate-eyebrow{
+    font-family:'Press Start 2P', monospace; font-size:10px;
+    color:var(--brass); letter-spacing:1px; margin-bottom:18px;
+  }
+  .gate-title{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(20px, 5vw, 34px);
+    color:var(--paper); line-height:1.5; margin:0 0 18px;
+  }
+  .gate-clock{
+    font-family:'Press Start 2P', monospace;
+    font-size:clamp(18px, 4.5vw, 28px);
+    color:var(--brass-bright); letter-spacing:2px; margin:22px 0 10px;
+  }
+  .gate-when{
+    font-family:'VT323', monospace; font-size:19px;
+    color:var(--paper); opacity:.75;
+  }
+  .gate-seller{
+    margin-top:22px; padding:8px 14px;
+    font-family:'Press Start 2P', monospace; font-size:8px;
+    color:var(--brass); background:transparent;
+    border:1px solid var(--brass); border-radius:2px;
+    cursor:pointer; opacity:.6;
+    transition:opacity .15s ease;
+  }
+  .gate-seller:hover{ opacity:1; }
+  .gate-note{
+    font-family:'VT323', monospace; font-size:17px;
+    color:var(--paper); opacity:.55; margin-top:26px;
+  }
+
+  /* ---------- YOUR OWN BIDS ----------
+     Anything this browser placed is picked out in gold so it stands apart
+     from everyone else's lines at a glance. */
+  .history-row.mine{
+    color:var(--brass-bright);
+    background:rgba(201,162,39,.14);
+    border-left:2px solid var(--brass-bright);
+    padding-left:6px;
+  }
+  .history-row.mine b{ color:var(--brass-bright); }
+  .you-tag{
+    font-family:'Press Start 2P', monospace; font-size:7px;
+    font-style:normal; margin-left:6px;
+    color:var(--ink); background:var(--brass-bright);
+    padding:2px 4px; border-radius:2px; vertical-align:middle;
+  }
+  .your-bid{
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:8px; padding:6px 8px;
+    font-family:'VT323', monospace; font-size:17px;
+    color:var(--brass-bright);
+    border:1px solid var(--brass);
+    background:rgba(201,162,39,.10);
+  }
+  .your-bid span{
+    font-family:'Press Start 2P', monospace; font-size:7px;
+    padding:3px 5px; border-radius:2px;
+    color:var(--ink); background:var(--brass);
+  }
+  .your-bid.leading{ border-color:var(--brass-bright); }
+  .your-bid.leading span{ background:var(--brass-bright); }
 
   /* ---------- VIDEO ---------- */
   .lot-gallery .main-video{
@@ -427,6 +628,19 @@
 </style>
 </head>
 <body>
+
+<div class="ticker" role="note" aria-label="Bids are not binding · Placing a bid carries no obligation to buy">
+  <div class="ticker-track" aria-hidden="true">
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+      <span>Bids are not binding · Placing a bid carries no obligation to buy</span>
+  </div>
+</div>
 
 <div class="wrap">
   <header class="masthead">
@@ -487,16 +701,37 @@
 
   <div class="seller-access">
     <button id="sellerAccessBtn" type="button">Seller sign-in</button>
+    <button id="openTimeBtn" type="button" style="display:none">Set opening time</button>
+    <button id="lockBtn" type="button" style="display:none">Lock site now</button>
+    <button id="sellerOutBtn" type="button" style="display:none">Exit seller mode</button>
   </div>
 </div>
 
-<div class="horse-track" aria-hidden="true">
+<div class="cloudbank" id="cloudbank" aria-hidden="true"></div>
+
+<div class="sky" id="sky" aria-hidden="true"></div>
+
+<div class="horse-track" id="stage" aria-hidden="true">
   <div class="horse-ground"></div>
-  <div class="parade">
-    <div class="runner"><canvas id="manCanvas" width="48" height="48"></canvas></div>
-    <div class="horse"><canvas id="horseCanvas" width="64" height="48"></canvas></div>
+  <div class="actor" id="hunter"><canvas id="hunterCanvas" width="56" height="56"></canvas></div>
+  <div class="muzzle" id="muzzle"><canvas id="muzzleCanvas" width="40" height="24"></canvas></div>
+  <div id="sceneBird"><canvas id="sceneBirdCanvas" width="36" height="28"></canvas></div>
+  <div class="actor" id="wolf"><canvas id="wolfCanvas" width="72" height="44"></canvas></div>
+</div>
+
+<div class="gate" id="gate" aria-hidden="true">
+  <div class="gate-inner">
+    <div class="gate-eyebrow">Doors Closed</div>
+    <h2 class="gate-title">The floor is not open yet</h2>
+    <div class="gate-clock" id="gateClock">--:--:--</div>
+    <div class="gate-when" id="gateWhen"></div>
+    <div class="gate-note">Come back when the clock runs out.</div>
+    <button class="gate-seller" id="gateSellerBtn" type="button">Seller sign-in</button>
   </div>
 </div>
+
+<button class="sound-toggle" id="soundToggle" type="button"
+        aria-pressed="false" title="Sound effects">SOUND OFF</button>
 
 <div class="toast" id="toast"></div>
 
@@ -528,14 +763,108 @@ const MAX_PHOTOS = 10;
 // Change this to your own passcode — only someone with it can list items.
 const SELLER_PASSCODE = "Yappingbird";
 
-function unlockSelling(){
+// Declared up here because the ?key= shortcut can run applyGate during the
+// initial script pass, before the gate section further down is reached.
+let openAt = null;          // ms timestamp, or null for open now
+let locked = false;         // manual switch, independent of the schedule
+let gateTimer = null;
+
+/* ---------- WHO AM I ----------
+   Each browser gets a random id kept on the device, so the site can tell
+   which bids came from this person and pick them out. It is stored locally
+   rather than in the database, so it never identifies anyone to anyone else.
+   Wrapped in try/catch because private browsing can refuse storage entirely,
+   in which case the id lasts for the session and nothing breaks. */
+const BIDDER_ID = (function(){
+  const KEY = 'bw_bidder_id';
+  try{
+    let id = localStorage.getItem(KEY);
+    if(!id){
+      id = 'b_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  }catch(e){
+    return 'b_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+  }
+})();
+
+const SELLER_FLAG = 'bw_seller';
+
+function rememberSeller(){
+  try{ sessionStorage.setItem(SELLER_FLAG, '1'); }catch(e){}
+}
+
+function forgetSeller(){
+  try{ sessionStorage.removeItem(SELLER_FLAG); }catch(e){}
+}
+
+function wasSeller(){
+  try{ return sessionStorage.getItem(SELLER_FLAG) === '1'; }catch(e){ return false; }
+}
+
+function unlockSelling(silent){
   isSeller = true;
+  rememberSeller();
+  const timeBtn = document.getElementById('openTimeBtn');
+  if(timeBtn) timeBtn.style.display = 'inline-block';
+  const outBtn = document.getElementById('sellerOutBtn');
+  if(outBtn) outBtn.style.display = 'inline-block';
+  const lockBtn = document.getElementById('lockBtn');
+  if(lockBtn) lockBtn.style.display = 'inline-block';
+  paintLockBtn();
+  applyGate();   // the seller is never held behind their own curtain
   const intake = document.getElementById('intake');
   intake.classList.add('visible');
   intake.setAttribute('open', '');
   document.getElementById('sellerAccessBtn').style.display = 'none';
-  intake.scrollIntoView({behavior:'smooth', block:'start'});
+  // Only jump to the form on a deliberate sign-in, not when restoring a session.
+  if(!silent) intake.scrollIntoView({behavior:'smooth', block:'start'});
+  render();      // redraw the cards so the delete controls appear
 }
+
+document.getElementById('openTimeBtn').addEventListener('click', promptOpenTime);
+
+function askForPasscode(){
+  const code = prompt('Enter the seller passcode:');
+  if(code === SELLER_PASSCODE){
+    unlockSelling();
+  }else if(code !== null){
+    showToast('Incorrect passcode');
+  }
+}
+
+document.getElementById('lockBtn').addEventListener('click', () => {
+  const next = !locked;
+  if(next && !confirm('Lock the site now? Visitors will not be able to see or bid on any lots until you unlock it.')) return;
+  locked = next;          // shown immediately, then confirmed by the database
+  paintLockBtn();
+  applyGate();
+  setLocked(next);
+});
+
+document.getElementById('gateSellerBtn').addEventListener('click', askForPasscode);
+
+
+document.getElementById('sellerOutBtn').addEventListener('click', () => {
+  isSeller = false;
+  forgetSeller();
+  const intake = document.getElementById('intake');
+  intake.classList.remove('visible');
+  intake.removeAttribute('open');
+  document.getElementById('sellerAccessBtn').style.display = 'inline-block';
+  document.getElementById('openTimeBtn').style.display = 'none';
+  document.getElementById('sellerOutBtn').style.display = 'none';
+  document.getElementById('lockBtn').style.display = 'none';
+  applyGate();   // the curtain drops again if the sale has not opened
+  render();
+  showToast('Viewing as a visitor');
+});
+
+// Restore seller access after a refresh, otherwise a reload before opening
+// time would leave the seller staring at their own curtain with the sign-in
+// button hidden behind it.
+if(wasSeller()) unlockSelling(true);
 
 document.getElementById('sellerAccessBtn').addEventListener('click', () => {
   const code = prompt('Enter the seller passcode to list an item:');
@@ -678,6 +1007,165 @@ document.getElementById('f-video').addEventListener('change', async (e) => {
 let lastLotsSnapshot = '';
 let suppressNextRender = false;
 
+/* Firebase does not store empty arrays, and it turns sparse arrays into
+   objects keyed by index. Both come back in a shape the renderer does not
+   expect, so every lot is repaired on the way in. */
+console.log('BUILD: lot-render-fix-v2');
+
+function asArray(v){
+  if(Array.isArray(v)) return v.filter(x => x !== null && x !== undefined);
+  if(v && typeof v === 'object') return Object.values(v).filter(x => x !== null && x !== undefined);
+  return [];
+}
+
+function normalizeLot(lot){
+  const l = lot && typeof lot === 'object' ? lot : {};
+  return {
+    ...l,
+    id: l.id || ('lot_' + Math.random().toString(36).slice(2)),
+    lotNo: l.lotNo || '000',
+    title: l.title || 'Untitled lot',
+    images: asArray(l.images),
+    bids: asArray(l.bids),
+    start: Number(l.start) || 0,
+    video: l.video || null,
+    glyph: l.glyph || GLYPHS[0]
+  };
+}
+
+/* ---------- OPENING TIME ----------
+   The seller sets a timestamp, stored in the database so every visitor is
+   held to the same clock rather than their own device settings. Until it
+   passes, the gate covers the page and a countdown runs.
+
+   Worth being clear: this hides the page, it does not secure it. The lot
+   data still sits in a public database, so treat the opening time as a
+   curtain rather than a lock. */
+function watchOpenTime(){
+  const { ref, onValue, db } = window.__fb;
+  onValue(ref(db, 'settings/openAt'), (snap) => {
+    const val = snap.val();
+    openAt = (typeof val === 'number' && val > 0) ? val : null;
+    applyGate();
+  });
+  // Kept separate from the schedule so closing early never destroys the
+  // opening time, and reopening never leaves a stale date behind.
+  onValue(ref(db, 'settings/locked'), (snap) => {
+    locked = snap.val() === true;
+    paintLockBtn();
+    applyGate();
+  });
+}
+
+async function setLocked(on){
+  try{
+    const { ref, set, db } = window.__fb;
+    await set(ref(db, 'settings/locked'), on);
+    showToast(on ? 'Site locked' : 'Site open');
+  }catch(e){
+    showToast('Could not change the lock');
+  }
+}
+
+function paintLockBtn(){
+  const btn = document.getElementById('lockBtn');
+  if(!btn) return;
+  btn.textContent = locked ? 'Unlock site' : 'Lock site now';
+  btn.classList.toggle('is-locked', locked);
+}
+
+async function saveOpenTime(ts){
+  try{
+    const { ref, set, db } = window.__fb;
+    await set(ref(db, 'settings/openAt'), ts);
+    showToast(ts ? 'Opening time set' : 'Opening time cleared');
+  }catch(e){
+    showToast('Could not save the opening time');
+  }
+}
+
+function pad(n){ return String(n).padStart(2, '0'); }
+
+function countdownText(ms){
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400);
+  const h = Math.floor((s % 86400) / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return (d > 0 ? d + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(sec);
+}
+
+function applyGate(){
+  const gate = document.getElementById('gate');
+  if(!gate) return;
+
+  // Two separate reasons to be closed. The manual lock wins over the
+  // schedule, so hitting lock during an open sale closes it immediately.
+  const beforeOpening = openAt !== null && Date.now() < openAt;
+  // The seller always gets through, otherwise they could lock themselves out.
+  const shut = (locked || beforeOpening) && !isSeller;
+
+  gate.classList.toggle('showing', shut);
+  gate.setAttribute('aria-hidden', shut ? 'false' : 'true');
+  // Hides the catalog while leaving the animated layers untouched.
+  document.body.classList.toggle('gated', shut);
+  document.body.style.overflow = shut ? 'hidden' : '';
+
+  if(gateTimer){ clearInterval(gateTimer); gateTimer = null; }
+  if(!shut) return;
+
+  const titleEl = document.querySelector('.gate-title');
+  const clockEl = document.getElementById('gateClock');
+  const whenEl  = document.getElementById('gateWhen');
+  const noteEl  = document.querySelector('.gate-note');
+
+  if(locked){
+    // A manual lock has no end time, so a countdown would be a lie.
+    titleEl.textContent = 'The floor is closed';
+    clockEl.style.display = 'none';
+    whenEl.textContent = beforeOpening
+      ? 'Scheduled to open ' + new Date(openAt).toLocaleString()
+      : '';
+    noteEl.textContent = 'Check back shortly.';
+    return;
+  }
+
+  titleEl.textContent = 'The floor is not open yet';
+  clockEl.style.display = '';
+  noteEl.textContent = 'Come back when the clock runs out.';
+  whenEl.textContent = 'Opens ' + new Date(openAt).toLocaleString();
+
+  const tickGate = () => {
+    const left = openAt - Date.now();
+    if(left <= 0){ applyGate(); render(); return; }
+    clockEl.textContent = countdownText(left);
+  };
+  tickGate();
+  gateTimer = setInterval(tickGate, 1000);
+}
+
+function promptOpenTime(){
+  const current = openAt ? new Date(openAt - new Date().getTimezoneOffset()*60000)
+                            .toISOString().slice(0,16) : '';
+  const answer = prompt(
+    'Set the opening time in your local timezone.\n' +
+    'Format: YYYY-MM-DD HH:MM  (24 hour)\n' +
+    'Leave blank and press OK to open the sale immediately.',
+    current.replace('T', ' ')
+  );
+  if(answer === null) return;
+
+  const trimmed = answer.trim();
+  if(!trimmed){ openAt = null; saveOpenTime(null); applyGate(); return; }
+
+  const parsed = new Date(trimmed.replace(' ', 'T'));
+  if(isNaN(parsed.getTime())){ showToast('Could not read that date'); return; }
+
+  openAt = parsed.getTime();
+  saveOpenTime(openAt);
+  applyGate();
+}
+
 function loadLots(){
   // Firebase's onValue fires immediately with current data, then again
   // every time the data changes anywhere — this replaces both the old
@@ -685,7 +1173,7 @@ function loadLots(){
   const { ref, onValue, db } = window.__fb;
   onValue(ref(db, 'lots'), (snapshot) => {
     const val = snapshot.val();
-    lots = val ? Object.values(val) : [];
+    lots = (val ? Object.values(val) : []).map(normalizeLot);
     const fresh = JSON.stringify(lots);
     if(fresh === lastLotsSnapshot && suppressNextRender){
       suppressNextRender = false;
@@ -697,13 +1185,18 @@ function loadLots(){
 }
 
 async function saveLots(){
+  // Returns whether the write landed, so callers that need to undo a local
+  // change (deleting a lot, say) can tell success from failure.
   try{
     lastLotsSnapshot = JSON.stringify(lots);
     suppressNextRender = true;
     const { ref, set, db } = window.__fb;
     await set(ref(db, 'lots'), lots);
+    return true;
   }catch(e){
+    suppressNextRender = false;
     showToast('Could not save — try again');
+    return false;
   }
 }
 
@@ -762,10 +1255,40 @@ async function placeBid(lotId){
   if(!amt || isNaN(amt)){ errEl.textContent = 'Enter a valid amount'; return; }
   if(amt <= currentHigh){ errEl.textContent = 'Must beat $' + fmtMoney(currentHigh); return; }
 
-  lot.bids.push({ name, amount: amt, at: Date.now() });
+  lot.bids.push({ name, amount: amt, at: Date.now(), by: BIDDER_ID });
   await saveLots();
   showToast(name + ' takes the lead on Lot ' + lot.lotNo);
   render();
+}
+
+async function deleteLot(lotId){
+  if(!isSeller){ showToast('Only the seller can remove lots'); return; }
+
+  const lot = lots.find(l => l.id === lotId);
+  if(!lot) return;
+
+  // Bids are lost with the lot and there is no undo, so make that explicit
+  // rather than letting a stray click wipe an active lot.
+  const warning = lot.bids.length
+    ? 'Delete Lot ' + lot.lotNo + ' (' + lot.title + ')?\n\n' +
+      'It has ' + lot.bids.length + ' bid' + (lot.bids.length === 1 ? '' : 's') +
+      ', which will be deleted too. This cannot be undone.'
+    : 'Delete Lot ' + lot.lotNo + ' (' + lot.title + ')?\n\nThis cannot be undone.';
+
+  if(!confirm(warning)) return;
+
+  const removed = lots.filter(l => l.id !== lotId);
+  const previous = lots;
+  lots = removed;
+  render();
+
+  const ok = await saveLots();
+  if(ok){
+    showToast('Lot ' + lot.lotNo + ' removed');
+  }else{
+    lots = previous;      // put it back if the write did not land
+    render();
+  }
 }
 
 function setActiveImage(lotId, idx, thumbEl){
@@ -784,9 +1307,25 @@ function lotCard(lot){
   const hasBids = lot.bids.length > 0;
   const current = hasBids ? lot.bids[lot.bids.length-1].amount : lot.start;
   const leader = hasBids ? lot.bids[lot.bids.length-1].name : null;
-  const historyRows = lot.bids.slice().reverse().slice(0,8).map(b =>
-    `<div class="history-row"><span>${esc(b.name)}</span><b>$${fmtMoney(b.amount)}</b></div>`
-  ).join('');
+  // Bids from this browser are picked out in gold, with a marker so it is
+  // obvious which line is yours even when names repeat.
+  const historyRows = lot.bids.slice().reverse().slice(0,8).map(b => {
+    const mine = b.by && b.by === BIDDER_ID;
+    return `<div class="history-row${mine ? ' mine' : ''}">` +
+      `<span>${esc(b.name)}${mine ? '<em class="you-tag">you</em>' : ''}</span>` +
+      `<b>$${fmtMoney(b.amount)}</b></div>`;
+  }).join('');
+
+  const topBid   = hasBids ? lot.bids[lot.bids.length-1] : null;
+  const leadMine = !!(topBid && topBid.by && topBid.by === BIDDER_ID);
+  // Their highest bid on this lot, so they can still see it once outbid.
+  const myBids   = lot.bids.filter(b => b.by && b.by === BIDDER_ID);
+  const myBest   = myBids.length ? Math.max(...myBids.map(b => b.amount)) : null;
+  const myLine   = myBest === null ? '' :
+    `<div class="your-bid${leadMine ? ' leading' : ''}">` +
+      `Your bid $${fmtMoney(myBest)}` +
+      `<span>${leadMine ? 'leading' : 'outbid'}</span>` +
+    `</div>`;
 
   const hasPhotos = lot.images && lot.images.length > 0;
   const videoHtml = lot.video ? `
@@ -815,6 +1354,8 @@ function lotCard(lot){
   return `
   <div class="lot">
     <div class="lot-badge">LOT ${lot.lotNo}</div>
+    ${isSeller ? `<button class="lot-delete" title="Remove this lot"
+      onclick="deleteLot('${lot.id}')">&times;</button>` : ''}
     ${galleryHtml}
     ${videoHtml}
     <div class="lot-body">
@@ -829,6 +1370,7 @@ function lotCard(lot){
         <div class="bid-current-label">${hasBids ? 'Current bid' : 'Starting bid'}${leader ? ' · ' + esc(leader) : ''}</div>
         <div class="bid-current-value"><span class="cur">$</span>${fmtMoney(current)}</div>
         <div class="bid-count">${lot.bids.length} bid${lot.bids.length===1?'':'s'}</div>
+        ${myLine}
 
         <div class="bid-form">
           <input type="text" class="name-input" id="name-${lot.id}" placeholder="Your name" maxlength="24">
@@ -863,115 +1405,767 @@ function render(){
 
 document.getElementById('btnAddLot').addEventListener('click', addLot);
 
-/* ---------- PIXEL HORSE ----------
-   Drawn as a 4-frame gallop cycle on a 16x12 pixel grid, scaled up 4x.
-   Each frame is a list of [x, y, w, h] blocks in grid units. */
+/* ---------- PIXEL BIRDS ----------
+   Small flocks drift across the middle of the screen at random intervals,
+   heights, sizes and speeds, so the sky never looks looped. Each bird is a
+   canvas drawn on a 9x7 grid with a 4-frame wing flap. Birds remove
+   themselves once they leave the viewport, so nothing accumulates. */
 (function(){
-  const cv = document.getElementById('horseCanvas');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
-  const PX = 4; // one grid unit = 4 real pixels
+  const sky = document.getElementById('sky');
+  if(!sky) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  const BODY = '#c08a28';   // brass
-  const DARK = '#7d5716';   // shading / legs
-  const MANE = '#efe9dc';   // paper — reads against the green backdrop
+  const INK = '#0d2b18';
+  const GRID_W = 9, GRID_H = 7;
 
-  // Shared body shape across all frames — only the legs change.
-  const bodyParts = [
-    // [x, y, w, h, color]
-    [3, 4, 8, 4, BODY],    // torso
-    [10, 2, 3, 3, BODY],   // neck
-    [12, 1, 3, 2, BODY],   // head
-    [14, 2, 1, 1, DARK],   // muzzle
-    [11, 1, 2, 1, MANE],   // mane
-    [10, 3, 1, 1, MANE],   // mane trail
-    [2, 3, 1, 3, MANE],    // tail
-    [1, 4, 1, 3, MANE],    // tail tip
-    [3, 7, 8, 1, DARK],    // belly shading
+  // Wing positions: up, mid, down, mid. Body stays put so it reads as one bird.
+  const BODY = [[3,3,3,1],[4,4,1,1]];
+  const WINGS = [
+    [[1,1,2,1],[2,2,1,1],[6,2,1,1],[7,1,2,1]],   // wings high
+    [[1,2,2,1],[3,3,0,0],[6,3,1,1],[7,2,2,1]],   // mid, coming down
+    [[1,4,2,1],[2,3,1,1],[6,3,1,1],[7,4,2,1]],   // wings low
+    [[1,2,2,1],[2,2,1,1],[6,2,1,1],[7,2,2,1]]    // mid, going up
   ];
 
-  // Four gallop poses: front-leg pair and back-leg pair positions.
-  const legFrames = [
-    [[4,8,1,3],[6,8,1,3],[9,8,1,3],[10,8,1,2]],
-    [[3,8,1,2],[5,8,1,3],[9,8,1,3],[11,8,1,3]],
-    [[4,8,1,3],[7,8,1,2],[8,8,1,3],[10,8,1,3]],
-    [[5,8,1,3],[6,8,1,2],[9,8,1,2],[11,8,1,3]],
-  ];
-
-  let frame = 0;
-
-  function draw(){
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    for(const [x, y, w, h, color] of bodyParts){
-      ctx.fillStyle = color;
-      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+  function drawBird(ctx, scale, frame){
+    ctx.clearRect(0, 0, GRID_W * scale, GRID_H * scale);
+    ctx.fillStyle = INK;
+    const blocks = BODY.concat(WINGS[frame]);
+    for(const [x, y, w, h] of blocks){
+      if(w <= 0 || h <= 0) continue;
+      ctx.fillRect(x * scale, y * scale, w * scale, h * scale);
     }
-    ctx.fillStyle = DARK;
-    for(const [x, y, w, h] of legFrames[frame]){
-      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
-    }
-    frame = (frame + 1) % legFrames.length;
   }
 
-  draw();
-  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    setInterval(draw, 110);
+  function rand(min, max){ return min + Math.random() * (max - min); }
+
+  function launchBird(){
+    const scale = Math.round(rand(2, 4));           // pixel chunkiness varies
+    const w = GRID_W * scale, h = GRID_H * scale;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'bird';
+    const cv = document.createElement('canvas');
+    cv.width = w; cv.height = h;
+    cv.style.width = w + 'px'; cv.style.height = h + 'px';
+    wrap.appendChild(cv);
+
+    // Keep them in the middle band of the page, away from header and horse.
+    const topPct = rand(18, 68);
+    wrap.style.top = topPct + '%';
+
+    const leftToRight = Math.random() < 0.5;
+    const travel = window.innerWidth + w + 80;
+    const duration = rand(9, 20);                    // seconds, varies a lot
+    const drift = rand(-40, 40);                     // slight vertical wander
+
+    wrap.style.left = leftToRight ? (-w - 40) + 'px' : (window.innerWidth + 40) + 'px';
+    if(!leftToRight) cv.style.transform = 'scaleX(-1)';  // face the way it flies
+
+    sky.appendChild(wrap);
+
+    const ctx = cv.getContext('2d');
+    let frame = 0;
+    // Smaller birds flap faster, which reads as being further away.
+    const flapMs = rand(90, 150) * (scale / 3);
+    const flap = setInterval(() => {
+      drawBird(ctx, scale, frame);
+      frame = (frame + 1) % WINGS.length;
+    }, flapMs);
+    drawBird(ctx, scale, 0);
+
+    const dx = leftToRight ? travel : -travel;
+    const anim = wrap.animate([
+      { transform: 'translate(0, 0)' },
+      { transform: 'translate(' + (dx / 2) + 'px, ' + drift + 'px)' },
+      { transform: 'translate(' + dx + 'px, 0)' }
+    ], { duration: duration * 1000, easing: 'linear', fill: 'forwards' });
+
+    anim.onfinish = () => {
+      clearInterval(flap);
+      wrap.remove();
+    };
   }
+
+  function scheduleFlock(){
+    // Usually one bird, sometimes a loose group of two or three.
+    const count = Math.random() < 0.35 ? Math.round(rand(2, 3)) : 1;
+    for(let i = 0; i < count; i++){
+      setTimeout(launchBird, i * rand(400, 1200));
+    }
+    setTimeout(scheduleFlock, rand(4000, 14000));
+  }
+
+  setTimeout(scheduleFlock, rand(1500, 4000));
 })();
 
-/* ---------- PIXEL STICKMAN (chasing the horse) ----------
-   12x12 grid scaled 4x. Head and torso hold still; arms and legs
-   swing through a 4-frame run cycle. */
+/* ---------- SOUND ----------
+   Both effects are synthesised with the Web Audio API rather than loaded as
+   files, so the page stays a single self-contained document with nothing to
+   host and nothing extra to download.
+
+   Two browser realities shape this. First, audio cannot start until the user
+   has interacted with the page, so the context is only created on a click.
+   Second, a scene that loops every 27 seconds would be unbearable with sound
+   forced on, so it is off by default and the choice is remembered. */
+window.__sfx = (function(){
+  let ctx = null;
+  let enabled = false;   // only ever true once the audio context is running
+  let wanted  = false;   // what the visitor chose last time
+
+  try{ wanted = localStorage.getItem('bw_sound') === 'on'; }catch(e){}
+
+  function ensureCtx(){
+    if(ctx) return ctx;
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if(!AC) return null;
+    ctx = new AC();
+    return ctx;
+  }
+
+  // A short burst of filtered noise for the crack, plus a low sine for the
+  // body of the report. Together they read as a gunshot rather than a hiss.
+  function gunshot(){
+    if(!enabled) return;
+    const ac = ensureCtx();
+    if(!ac || ac.state === 'suspended') return;
+    const t = ac.currentTime;
+
+    const len = Math.floor(ac.sampleRate * 0.32);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const data = buf.getChannelData(0);
+    for(let i = 0; i < len; i++){
+      // Noise that dies away quickly, which is what gives it the snap.
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.6);
+    }
+
+    const noise = ac.createBufferSource();
+    noise.buffer = buf;
+
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(5200, t);
+    lp.frequency.exponentialRampToValueAtTime(320, t + 0.28);
+
+    const ng = ac.createGain();
+    ng.gain.setValueAtTime(0.85, t);
+    ng.gain.exponentialRampToValueAtTime(0.0008, t + 0.3);
+
+    noise.connect(lp); lp.connect(ng); ng.connect(ac.destination);
+    noise.start(t); noise.stop(t + 0.32);
+
+    const thump = ac.createOscillator();
+    thump.type = 'sine';
+    thump.frequency.setValueAtTime(160, t);
+    thump.frequency.exponentialRampToValueAtTime(42, t + 0.16);
+
+    const tg = ac.createGain();
+    tg.gain.setValueAtTime(0.6, t);
+    tg.gain.exponentialRampToValueAtTime(0.0008, t + 0.22);
+
+    thump.connect(tg); tg.connect(ac.destination);
+    thump.start(t); thump.stop(t + 0.24);
+  }
+
+  // A cartoon yelp: pitch leaps up, wobbles, then falls away. The wobble is
+  // what stops it sounding like a plain siren.
+  function scream(){
+    if(!enabled) return;
+    const ac = ensureCtx();
+    if(!ac || ac.state === 'suspended') return;
+    const t = ac.currentTime;
+    const dur = 0.62;
+
+    const osc = ac.createOscillator();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(340, t);
+    osc.frequency.exponentialRampToValueAtTime(880, t + 0.09);
+    osc.frequency.setValueAtTime(880, t + 0.30);
+    osc.frequency.exponentialRampToValueAtTime(300, t + dur);
+
+    // Vibrato, so it sounds like a voice rather than a tone generator.
+    const lfo = ac.createOscillator();
+    lfo.type = 'sine';
+    lfo.frequency.setValueAtTime(17, t);
+    const lfoGain = ac.createGain();
+    lfoGain.gain.setValueAtTime(55, t);
+    lfo.connect(lfoGain); lfoGain.connect(osc.frequency);
+
+    const bp = ac.createBiquadFilter();
+    bp.type = 'bandpass';
+    bp.frequency.setValueAtTime(1100, t);
+    bp.Q.setValueAtTime(3.5, t);
+
+    const g = ac.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.4, t + 0.05);
+    g.gain.setValueAtTime(0.4, t + 0.34);
+    g.gain.exponentialRampToValueAtTime(0.0008, t + dur);
+
+    osc.connect(bp); bp.connect(g); g.connect(ac.destination);
+    osc.start(t); osc.stop(t + dur);
+    lfo.start(t); lfo.stop(t + dur);
+  }
+
+  /* A sustained growl for the chase. Unlike the one-shot effects this has to
+     run for several seconds and then stop, so the nodes are held on to rather
+     than fired and forgotten.
+
+     Driven by growlSet(on) rather than by start and stop cues. Calling it
+     with the same value repeatedly does nothing, which means every frame can
+     simply state whether the wolf should be growling and the sound follows.
+     That stays correct if the tab is backgrounded, the loop wraps, or the
+     visitor mutes partway through the chase. */
+  let growl = null;
+
+  function makeNoiseLoop(ac){
+    const len = Math.floor(ac.sampleRate * 2);
+    const buf = ac.createBuffer(1, len, ac.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
+    const src = ac.createBufferSource();
+    src.buffer = buf;
+    src.loop = true;
+    return src;
+  }
+
+  function growlStart(){
+    if(growl || !enabled) return;
+    const ac = ensureCtx();
+    if(!ac || ac.state !== 'running') return;
+    const t = ac.currentTime;
+
+    // Two detuned saws an octave apart give the growl its body.
+    const low = ac.createOscillator();
+    low.type = 'sawtooth';
+    low.frequency.setValueAtTime(58, t);
+
+    const mid = ac.createOscillator();
+    mid.type = 'sawtooth';
+    mid.frequency.setValueAtTime(83, t);
+
+    // Noise adds the breath and rasp behind the tone.
+    const noise = makeNoiseLoop(ac);
+    const nBand = ac.createBiquadFilter();
+    nBand.type = 'bandpass';
+    nBand.frequency.setValueAtTime(420, t);
+    nBand.Q.setValueAtTime(1.2, t);
+    const nGain = ac.createGain();
+    nGain.gain.setValueAtTime(0.16, t);
+
+    // Rolling off the top is what keeps it a growl rather than a buzz.
+    const lp = ac.createBiquadFilter();
+    lp.type = 'lowpass';
+    lp.frequency.setValueAtTime(640, t);
+    lp.Q.setValueAtTime(2.2, t);
+
+    // Slow sweep of the filter reads as the chest rumble.
+    const rumble = ac.createOscillator();
+    rumble.type = 'sine';
+    rumble.frequency.setValueAtTime(6.5, t);
+    const rumbleDepth = ac.createGain();
+    rumbleDepth.gain.setValueAtTime(240, t);
+    rumble.connect(rumbleDepth);
+    rumbleDepth.connect(lp.frequency);
+
+    // Faster wobble on the volume gives it the uneven, animal texture.
+    const rasp = ac.createOscillator();
+    rasp.type = 'sine';
+    rasp.frequency.setValueAtTime(23, t);
+    const raspDepth = ac.createGain();
+    raspDepth.gain.setValueAtTime(0.06, t);
+
+    const out = ac.createGain();
+    out.gain.setValueAtTime(0.0001, t);
+    out.gain.exponentialRampToValueAtTime(0.20, t + 0.18);   // fade in
+    rasp.connect(raspDepth);
+    raspDepth.connect(out.gain);
+
+    low.connect(lp); mid.connect(lp);
+    noise.connect(nBand); nBand.connect(nGain); nGain.connect(lp);
+    lp.connect(out); out.connect(ac.destination);
+
+    low.start(t); mid.start(t); noise.start(t);
+    rumble.start(t); rasp.start(t);
+
+    growl = {
+      out: out,
+      nodes: [low, mid, noise, rumble, rasp]
+    };
+  }
+
+  function growlStop(){
+    if(!growl) return;
+    const g = growl;
+    growl = null;
+    const ac = ctx;
+    if(!ac){ return; }
+    const t = ac.currentTime;
+    try{
+      g.out.gain.cancelScheduledValues(t);
+      g.out.gain.setValueAtTime(Math.max(g.out.gain.value, 0.0001), t);
+      g.out.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);  // fade out
+      for(const n of g.nodes) n.stop(t + 0.26);
+    }catch(e){}
+  }
+
+  function growlSet(on){
+    if(on) growlStart();
+    else growlStop();
+  }
+
+  // Must be called straight from a click handler: browsers only honour
+  // resume() while a real user gesture is being processed.
+  function setEnabled(on){
+    if(!on){
+      enabled = false;
+      growlStop();            // do not leave a growl running after muting
+      remember(false);
+      return Promise.resolve(false);
+    }
+    const ac = ensureCtx();
+    if(!ac){ return Promise.resolve(false); }
+
+    const ready = ac.state === 'suspended' ? ac.resume() : Promise.resolve();
+    return ready.then(() => {
+      enabled = ac.state === 'running';
+      remember(enabled);
+      return enabled;
+    }).catch(() => {
+      enabled = false;
+      remember(false);
+      return false;
+    });
+  }
+
+  function remember(on){
+    wanted = on;
+    try{ localStorage.setItem('bw_sound', on ? 'on' : 'off'); }catch(e){}
+  }
+
+  // A returning visitor who had sound on still needs one gesture before the
+  // browser will play anything, so the first click anywhere re-arms it.
+  if(wanted){
+    const rearm = () => {
+      setEnabled(true).then((on) => {
+        if(on) document.dispatchEvent(new CustomEvent('sfxready'));
+      });
+      document.removeEventListener('click', rearm);
+    };
+    document.addEventListener('click', rearm);
+  }
+
+  return {
+    gunshot: gunshot,
+    scream: scream,
+    growlSet: growlSet,
+    setEnabled: setEnabled,
+    isEnabled: function(){ return enabled; },
+    isWanted: function(){ return wanted; }
+  };
+})();
+
+/* The toggle has to be wired after the engine above exists, otherwise the
+   guard clause bails out and the button never gets a click handler. */
+(function soundControl(){
+  const btn = document.getElementById('soundToggle');
+  if(!btn) return;
+
+  function paint(){
+    const on = !!(window.__sfx && (window.__sfx.isEnabled() || window.__sfx.isWanted()));
+    btn.textContent = on ? 'SOUND ON' : 'SOUND OFF';
+    btn.classList.toggle('on', on);
+    btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+  }
+
+  btn.addEventListener('click', () => {
+    if(!window.__sfx){ showToast('Sound is not available in this browser'); return; }
+    const want = !window.__sfx.isEnabled();
+    Promise.resolve(window.__sfx.setEnabled(want)).then((actual) => {
+      paint();
+      if(want && !actual) showToast('Your browser blocked audio');
+    });
+  });
+  paint();
+  document.addEventListener('sfxready', paint);
+})();
+
+/* ---------- PIXEL CLOUDS ----------
+   A handful of small clouds drifting slowly across the title block. Low
+   opacity and behind the text, so they read as depth rather than clutter. */
 (function(){
-  const cv = document.getElementById('manCanvas');
-  if(!cv) return;
-  const ctx = cv.getContext('2d');
-  const PX = 4;
-  const LINE = '#efe9dc';
+  const bank = document.getElementById('cloudbank');
+  if(!bank) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-  // Static core: head, neck, torso.
-  const core = [
-    [5, 1, 3, 1], [4, 2, 1, 2], [8, 2, 1, 2], [5, 4, 3, 1], // head outline
-    [6, 5, 1, 1],                                            // neck
-    [6, 6, 1, 4],                                            // torso
+  const PX = 3;
+  const PUFF = '#efe9dc';
+  // Three silhouettes so they are not all the same shape.
+  const SHAPES = [
+    { w:11, h:5, blocks:[[2,2,7,2],[3,1,3,1],[6,0,3,2],[1,3,9,1]] },
+    { w:8,  h:4, blocks:[[1,2,6,1],[2,1,4,1],[3,0,2,1],[0,3,8,1]] },
+    { w:14, h:5, blocks:[[2,2,10,2],[4,1,5,1],[7,0,3,1],[1,4,12,1]] }
   ];
 
-  // Per-frame limbs: arms reaching forward, legs mid-stride.
-  const limbFrames = [
-    { arms: [[7,6,2,1],[9,5,1,1],[4,7,2,1],[3,8,1,1]],
-      legs: [[7,10,2,1],[9,11,1,1],[4,10,2,1],[3,11,1,1]] },
-    { arms: [[7,6,1,1],[8,7,1,1],[5,7,1,1],[4,8,1,1]],
-      legs: [[6,10,1,2],[7,11,2,1],[5,10,1,2],[4,11,1,1]] },
-    { arms: [[4,6,2,1],[3,5,1,1],[7,7,2,1],[9,8,1,1]],
-      legs: [[4,10,2,1],[3,11,1,1],[7,10,2,1],[9,11,1,1]] },
-    { arms: [[5,6,1,1],[4,7,1,1],[7,7,1,1],[8,8,1,1]],
-      legs: [[5,10,1,2],[4,11,1,1],[6,10,1,2],[7,11,2,1]] },
+  function rand(a, b){ return a + Math.random() * (b - a); }
+
+  function makeCloud(shape, scale){
+    const cv = document.createElement('canvas');
+    cv.width  = Math.round(shape.w * PX * scale);
+    cv.height = Math.round(shape.h * PX * scale);
+    cv.style.width  = cv.width + 'px';
+    cv.style.height = cv.height + 'px';
+    const ctx = cv.getContext('2d');
+    ctx.fillStyle = PUFF;
+    for(const b of shape.blocks){
+      ctx.fillRect(b[0]*PX*scale, b[1]*PX*scale, b[2]*PX*scale, b[3]*PX*scale);
+    }
+    return cv;
+  }
+
+  // `startAt` seeds a cloud already part way across, so the sky is not empty
+  // on load and the two directions never fall into step with each other.
+  function launch(startAt){
+    const shape = SHAPES[Math.floor(Math.random() * SHAPES.length)];
+    const scale = rand(0.7, 1.6);
+    const wrap  = document.createElement('div');
+    wrap.className = 'cloud';
+    wrap.appendChild(makeCloud(shape, scale));
+    wrap.style.top = rand(4, 76) + '%';
+    // Bigger clouds sit heavier, smaller ones fade back into the distance.
+    wrap.style.opacity = String(scale > 1.2 ? rand(0.22, 0.36) : rand(0.12, 0.24));
+
+    const width = window.innerWidth;
+    const span  = width + 320;
+    const rightward = Math.random() < 0.5;
+    wrap.style.left = rightward ? '-160px' : (width + 40) + 'px';
+    bank.appendChild(wrap);
+
+    const dx = rightward ? span : -span;
+    // Larger clouds drift faster, which sells them as being nearer.
+    const duration = rand(45000, 95000) / (0.7 + scale * 0.4);
+    const anim = wrap.animate(
+      [{ transform:'translateX(0)' }, { transform:'translateX(' + dx + 'px)' }],
+      { duration: duration, easing:'linear', fill:'forwards' }
+    );
+    if(startAt) anim.currentTime = duration * startAt;
+    anim.onfinish = () => wrap.remove();
+  }
+
+  // Seed a scattered skyful at various points in their crossing, then trickle.
+  // Doubled up, so the band stays busy rather than thinning out between waves.
+  for(let i = 0; i < 12; i++) launch(rand(0.03, 0.92));
+  setInterval(() => { if(Math.random() < 0.75) launch(0); }, 3500);
+})();
+
+/* ---------- THE SCENE ----------
+   A scripted story on the bottom strip, run off one clock so every beat
+   lands in the right order. The hunter walks in, shoots a bird, and a wolf
+   robs him of it before he can pick it up. Positions are worked out from
+   the elapsed time rather than from independent CSS loops, which is the
+   only way to keep several actors agreeing about what happens when. */
+(function(){
+  const stage = document.getElementById('stage');
+  if(!stage) return;
+  if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  const hunterEl = document.getElementById('hunter');
+  const wolfEl   = document.getElementById('wolf');
+  const birdEl   = document.getElementById('sceneBird');
+  const muzzleEl = document.getElementById('muzzle');
+  if(!hunterEl || !wolfEl || !birdEl || !muzzleEl) return;
+
+  const hCtx = document.getElementById('hunterCanvas').getContext('2d');
+  const wCtx = document.getElementById('wolfCanvas').getContext('2d');
+  const bCtx = document.getElementById('sceneBirdCanvas').getContext('2d');
+  const mCtx = document.getElementById('muzzleCanvas').getContext('2d');
+
+  const PX    = 4;
+  const LINE  = '#efe9dc';   // hunter, same cream as before
+  const GUN   = '#c9a227';   // brass barrel
+  const FLASH = '#ffd75e';
+  const WOLF_A = '#6f6b62';
+  const WOLF_B = '#43413b';
+  const BIRD_C = '#0d2b18';
+
+  function blocks(ctx, list, color, w, h){
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = color;
+    for(const b of list){
+      if(!b || b[2] <= 0 || b[3] <= 0) continue;
+      ctx.fillRect(b[0]*PX, b[1]*PX, b[2]*PX, b[3]*PX);
+    }
+  }
+
+  /* ----- hunter, 14x14 grid ----- */
+  const H_CORE = [[5,0,3,3],[5,3,3,5]];           // head and torso
+  const H_LEGS = [
+    [[5,8,1,4],[7,8,1,4]],                        // stride open
+    [[5,8,2,4]],                                  // together
+    [[5,8,1,4],[7,8,1,4]],
+    [[6,8,2,4]]
+  ];
+  const H_ARMS = [
+    [[4,4,1,3],[8,4,1,3]],
+    [[4,3,1,3],[8,5,1,3]],
+    [[4,5,1,3],[8,3,1,3]],
+    [[4,4,1,3],[8,4,1,3]]
+  ];
+  const H_STAND = { legs:[[5,8,1,4],[7,8,1,4]], arms:[[4,4,1,3],[8,4,1,3]] };
+  // Arms out straight, holding the gun level.
+  const H_AIM_ARMS = [[8,4,2,1]];
+  const H_GUN      = [[10,4,4,1],[9,5,1,1]];
+  // Bending down towards the bird.
+  const H_CROUCH = [[5,1,3,3],[5,4,3,4],[8,5,2,1],[5,8,1,4],[7,8,1,4]];
+  // Startled: arms flung up, legs tucked, body hoisted clear of the ground.
+  const H_PANIC = [
+    [5,0,3,3],          // head
+    [5,3,3,5],          // torso
+    [3,0,1,3],[9,0,1,3],// arms thrown straight up
+    [4,1,1,1],[8,1,1,1],// hands splayed
+    [5,8,1,3],[7,8,1,3] // knees drawn up
   ];
 
-  let frame = 0;
-
-  function draw(){
-    ctx.clearRect(0, 0, cv.width, cv.height);
-    ctx.fillStyle = LINE;
-    for(const [x, y, w, h] of core){
-      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+  function drawHunter(pose, frame){
+    let list;
+    if(pose === 'aim'){
+      list = H_CORE.concat(H_AIM_ARMS, H_STAND.legs);
+    }else if(pose === 'crouch'){
+      list = H_CROUCH;
+    }else if(pose === 'panic'){
+      list = H_PANIC;
+    }else if(pose === 'stand'){
+      list = H_CORE.concat(H_STAND.arms, H_STAND.legs);
+    }else{
+      list = H_CORE.concat(H_ARMS[frame], H_LEGS[frame]);
     }
-    const f = limbFrames[frame];
-    for(const [x, y, w, h] of f.arms.concat(f.legs)){
-      ctx.fillRect(x*PX, y*PX, w*PX, h*PX);
+    blocks(hCtx, list, LINE, 56, 56);
+    if(pose === 'aim'){
+      hCtx.fillStyle = GUN;
+      for(const b of H_GUN) hCtx.fillRect(b[0]*PX, b[1]*PX, b[2]*PX, b[3]*PX);
     }
-    frame = (frame + 1) % limbFrames.length;
   }
 
-  draw();
-  if(!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
-    setInterval(draw, 100); // slightly faster stride than the horse
+  /* ----- wolf, 18x11 grid, faces right ----- */
+  const W_CORE = [
+    [4,3,9,4],                 // body
+    [12,2,4,3],                // head
+    [15,4,2,1],                // snout
+    [12,1,1,1],[14,1,1,1],     // ears
+    [2,2,2,1],[1,1,1,1]        // tail
+  ];
+  const W_LEGS = [
+    [[4,7,1,4],[6,7,1,3],[10,7,1,3],[12,7,1,4]],
+    [[5,7,1,3],[7,7,1,4],[10,7,1,4],[11,7,1,3]],
+    [[4,7,1,3],[6,7,1,4],[10,7,1,3],[12,7,1,3]],
+    [[5,7,1,4],[7,7,1,3],[11,7,1,4],[12,7,1,3]]
+  ];
+  const W_HEAD_DOWN = [[12,4,4,3],[15,6,2,1],[12,3,1,1],[14,3,1,1]];
+
+  function drawWolf(frame, headDown, carrying){
+    let list = headDown
+      ? [[4,3,9,4],[2,2,2,1],[1,1,1,1]].concat(W_HEAD_DOWN, W_LEGS[frame])
+      : W_CORE.concat(W_LEGS[frame]);
+    wCtx.clearRect(0, 0, 72, 44);
+    wCtx.fillStyle = WOLF_A;
+    for(const b of list) wCtx.fillRect(b[0]*PX, b[1]*PX, b[2]*PX, b[3]*PX);
+    wCtx.fillStyle = WOLF_B;
+    wCtx.fillRect(4*PX, 6*PX, 9*PX, PX);       // shading along the belly
+    if(carrying){
+      wCtx.fillStyle = BIRD_C;                  // limp bird in the jaws
+      wCtx.fillRect(15*PX, 6*PX, 3*PX, PX);
+      wCtx.fillRect(16*PX, 7*PX, 1*PX, PX);
+    }
   }
+
+  /* ----- bird, 9x7 grid ----- */
+  const B_BODY  = [[3,3,3,1],[4,4,1,1]];
+  const B_WINGS = [
+    [[1,1,2,1],[2,2,1,1],[6,2,1,1],[7,1,2,1]],
+    [[1,2,2,1],[6,3,1,1],[7,2,2,1]],
+    [[1,4,2,1],[2,3,1,1],[6,3,1,1],[7,4,2,1]],
+    [[1,2,2,1],[2,2,1,1],[6,2,1,1],[7,2,2,1]]
+  ];
+  const B_HIT   = [[3,3,3,1],[4,4,1,1],[1,4,2,1],[7,4,2,1]];  // wings collapsed
+  const B_DEAD  = [[2,5,5,1],[7,4,1,1],[3,4,2,1]];            // slumped on the ground
+
+  function drawBird(mode, frame){
+    let list;
+    if(mode === 'dead')      list = B_DEAD;
+    else if(mode === 'hit')  list = B_HIT;
+    else                     list = B_BODY.concat(B_WINGS[frame]);
+    blocks(bCtx, list, BIRD_C, 36, 28);
+  }
+
+  function drawMuzzle(){
+    mCtx.clearRect(0, 0, 40, 24);
+    mCtx.fillStyle = FLASH;
+    for(const b of [[0,2,2,1],[2,1,1,1],[2,3,1,1],[3,2,1,1],[1,0,1,1],[1,4,1,1]]){
+      mCtx.fillRect(b[0]*PX, b[1]*PX, b[2]*PX, b[3]*PX);
+    }
+  }
+  drawMuzzle();
+
+  function lerp(a, b, t){ return a + (b - a) * t; }
+  function seg(t, a, b){ return Math.min(1, Math.max(0, (t - a) / (b - a))); }
+  function place(el, x, y){ el.style.transform = 'translate(' + x + 'px, ' + y + 'px)'; }
+  function face(el, right){
+    // Flip the canvas, never the wrapper: the wrapper carries the translate,
+    // and CSS resolves `scale` before `transform`, which would mirror the
+    // position too and throw the actor off screen.
+    const cv = el.querySelector('canvas');
+    if(cv) cv.style.transform = right ? 'none' : 'scaleX(-1)';
+  }
+
+  const LOOP = 27000;
+
+  // Cue points, and the previous frame's clock so each one fires exactly once
+  // per loop. Comparing against the previous t is what makes this work when
+  // the clock wraps back to zero at the end of the cycle.
+  const SHOT_AT   = 5200;    // the moment the muzzle flashes
+  const SCREAM_AT = 12600;   // the moment he leaps
+  // The growl runs for the chase itself: from the moment the wolf turns and
+  // drives him left, until he is gone off the edge of the screen.
+  const GROWL_FROM = 13300;
+  const GROWL_TO   = 17600;
+  let prevT = -1;
+
+  function crossed(mark, t){
+    if(prevT < 0) return false;
+    return prevT < mark && t >= mark;
+  }
+
+  function tick(now){
+    const t = now % LOOP;
+
+    if(window.__sfx){
+      if(crossed(SHOT_AT, t))   window.__sfx.gunshot();
+      if(crossed(SCREAM_AT, t)) window.__sfx.scream();
+      // Stated every frame rather than switched on cue, so it self-corrects
+      // if the tab was backgrounded or the visitor muted mid-chase.
+      window.__sfx.growlSet(t >= GROWL_FROM && t < GROWL_TO);
+    }
+    prevT = t;
+    const W = window.innerWidth;
+
+    // Landmarks for this run, recomputed each frame so a window resize is handled.
+    const shootX  = W * 0.28;      // where he stops and takes the shot
+    const birdX   = W * 0.66;      // where the bird comes down
+    const reachX  = birdX - 62;    // as close as he gets before the wolf arrives
+    const wolfHold = W * 0.14;     // how far left the wolf drives him
+    const AIR_Y   = -46;           // bird's cruising height above the strip
+
+    const walkFrame = Math.floor(now / 120) % 4;
+    const runFrame  = Math.floor(now / 90) % 4;
+
+    /* ----- the bird ----- */
+    let bx, by, bmode = 'fly';
+    if(t < 4000){
+      bx = lerp(W + 40, birdX + 14, seg(t, 0, 4000));
+      by = AIR_Y;
+    }else if(t < 5200){
+      bx = lerp(birdX + 14, birdX + 6, seg(t, 4000, 5200));
+      by = AIR_Y;
+    }else if(t < 5400){
+      bx = birdX + 6; by = AIR_Y; bmode = 'hit';
+    }else if(t < 6700){
+      const f = seg(t, 5400, 6700);
+      bx = lerp(birdX + 6, birdX, f);
+      by = lerp(AIR_Y, 0, f * f);        // accelerating as it drops
+      bmode = 'hit';
+    }else{
+      bx = birdX; by = 0; bmode = 'dead';
+    }
+    // Once the wolf has it in its jaws the loose bird disappears.
+    const carried = t >= 21200 && t < 24700;
+    birdEl.style.opacity = carried ? '0' : '1';
+    birdEl.style.bottom = '16px';
+    place(birdEl, bx, by);
+    drawBird(bmode, Math.floor(now / 110) % 4);
+
+    /* ----- the hunter ----- */
+    let hx, hy = 0, hpose = 'walk', hface = true, hvis = true;
+    if(t < 4000){
+      hx = lerp(-70, shootX, seg(t, 0, 4000));
+    }else if(t < 5400){
+      hx = shootX; hpose = 'aim';
+    }else if(t < 7200){
+      hx = shootX; hpose = 'stand';                 // watching it come down
+    }else if(t < 10800){
+      hx = lerp(shootX, reachX, seg(t, 7200, 10800));
+    }else if(t < 12600){
+      hx = reachX; hpose = 'crouch';                // reaching for it
+    }else if(t < 13700){
+      // The wolf is bearing down and he leaps out of his crouch. One arc up
+      // and back down, feet leaving the ground, arms thrown overhead.
+      const f = seg(t, 12600, 13700);
+      hx = reachX - 26 * f;                         // recoils backwards mid-air
+      hy = -Math.sin(f * Math.PI) * 34;             // the hop itself
+      hpose = 'panic';
+    }else if(t < 14100){
+      hx = reachX - 26; hpose = 'panic';            // lands, still rigid
+    }else if(t < 17600){
+      hx = lerp(reachX - 26, -110, seg(t, 14100, 17600));
+      hface = false;                                // legging it
+    }else{
+      hvis = false;
+    }
+    hunterEl.style.opacity = hvis ? '1' : '0';
+    face(hunterEl, hface);
+    place(hunterEl, hx, hy);
+    drawHunter(hpose, walkFrame);
+
+    /* ----- muzzle flash ----- */
+    if(t >= 5200 && t < 5400){
+      muzzleEl.style.opacity = '1';
+      muzzleEl.style.bottom = '16px';
+      place(muzzleEl, hx + 54, -32);
+    }else{
+      muzzleEl.style.opacity = '0';
+    }
+
+    /* ----- the wolf ----- */
+    let wx, wface = false, wvis = true, wdown = false, wcarry = false;
+    if(t < 11400){
+      wvis = false; wx = W + 90;
+    }else if(t < 13300){
+      wx = lerp(W + 90, reachX + 150, seg(t, 11400, 13300));   // charges in from the right
+    }else if(t < 17600){
+      wx = lerp(reachX + 150, wolfHold, seg(t, 13300, 17600)); // runs him off to the left
+    }else if(t < 18400){
+      wx = wolfHold;                                           // pulls up
+    }else if(t < 21200){
+      wx = lerp(wolfHold, birdX - 40, seg(t, 18400, 21200));
+      wface = true;                                            // back for the prize
+    }else if(t < 22200){
+      wx = birdX - 40; wface = true; wdown = true;             // takes it
+    }else if(t < 24700){
+      wx = lerp(birdX - 40, W + 90, seg(t, 22200, 24700));
+      wface = true; wcarry = true;                             // back out to the right
+    }else{
+      wvis = false; wx = W + 90;
+    }
+    wolfEl.style.opacity = wvis ? '1' : '0';
+    face(wolfEl, wface);
+    place(wolfEl, wx, 0);
+    drawWolf(runFrame, wdown, wcarry);
+
+    requestAnimationFrame(tick);
+  }
+
+  // rAF pauses when the tab is hidden, which would freeze the growl mid-chase
+  // and leave it hanging. Cut it when the page goes away.
+  document.addEventListener('visibilitychange', () => {
+    if(document.hidden && window.__sfx) window.__sfx.growlSet(false);
+  });
+
+  requestAnimationFrame(tick);
 })();
 
 function startWhenFirebaseReady(){
   if(window.__fb){
     loadLots();
+    watchOpenTime();
   }else{
     setTimeout(startWhenFirebaseReady, 50);
   }
